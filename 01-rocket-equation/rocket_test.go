@@ -4,7 +4,7 @@ import "testing"
 
 func TestFuelForMass(t *testing.T) {
 	cases := []struct {
-		input, expected uint
+		input, expected uint64
 	}{
 		{12, 2},
 		{14, 2},
