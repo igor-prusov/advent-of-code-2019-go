@@ -7,8 +7,16 @@ import (
 	"strconv"
 )
 
-func fuelForMass(mass uint64) uint64 {
+func fuelForMass(mass int64) int64 {
 	return mass/3 - 2
+}
+
+func fuelForMassPrecise(mass int64) int64 {
+	if fuel := fuelForMass(mass); fuel < 0 {
+		return 0
+	} else {
+		return fuel + fuelForMassPrecise(fuel)
+	}
 }
 
 func main() {
@@ -19,15 +27,18 @@ func main() {
 	}
 	scanner := bufio.NewScanner(file)
 
-	var fuelMass uint64 = 0
+	var fuelMass int64 = 0
+	var fuelMassPrecise int64 = 0
 
 	for scanner.Scan() {
-		mass, err := strconv.ParseUint(scanner.Text(), 10, 0)
+		mass, err := strconv.Atoi(scanner.Text())
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error: ", err.Error())
 			os.Exit(1)
 		}
-		fuelMass += fuelForMass(mass)
+		fuelMass += fuelForMass(int64(mass))
+		fuelMassPrecise += fuelForMassPrecise(int64(mass))
 	}
-	fmt.Println("Fuel required = ", fuelMass)
+	fmt.Println("Fuel required (fuel mass == 0) = ", fuelMass)
+	fmt.Println("Fuel required (fuel mass != 0) = ", fuelMassPrecise)
 }
