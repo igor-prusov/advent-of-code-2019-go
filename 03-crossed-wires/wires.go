@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"image"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func min(x, y int) int {
@@ -113,7 +115,6 @@ func runWire(f field, a image.Point, b image.Point, wire_id int) int {
 			dist := abs(p.X-f.start.X) + abs(p.Y-f.start.Y)
 			v := f.matrix[p.Y][p.X]
 			if v != wire_id && v != 0 && dist < minDistance && !p.Eq(f.start) {
-				fmt.Println("Intersection at ", image.Point{p.X, p.Y}, "dist = ", dist)
 				minDistance = dist
 			}
 			f.matrix[p.Y][p.X] = wire_id
@@ -124,7 +125,6 @@ func runWire(f field, a image.Point, b image.Point, wire_id int) int {
 			dist := abs(p.X-f.start.X) + abs(p.Y-f.start.Y)
 			v := f.matrix[p.Y][p.X]
 			if v != wire_id && v != 0 && dist < minDistance && !p.Eq(f.start) {
-				fmt.Println("Intersection at ", image.Point{p.X, p.Y}, "dist = ", dist)
 				minDistance = dist
 			}
 			f.matrix[p.Y][p.X] = wire_id
@@ -171,23 +171,44 @@ func printMatrix(matrix [][]int) {
 	}
 }
 
-func main() {
-	wire1 := []movement{
-		{8, RIGHT},
-		{5, UP},
-		{5, LEFT},
-		{3, DOWN},
-	}
+func parseMovements(input string) []movement {
+	var result []movement
+	for _, s := range strings.Split(input, ",") {
+		var m movement
 
-	wire2 := []movement{
-		{7, UP},
-		{6, RIGHT},
-		{4, DOWN},
-		{4, LEFT},
+		switch s[0] {
+		case 'R':
+			m.direction = RIGHT
+		case 'L':
+			m.direction = LEFT
+		case 'U':
+			m.direction = UP
+		case 'D':
+			m.direction = DOWN
+		default:
+			fmt.Fprintln(os.Stderr, "Can't parse direction:", s[0])
+			panic(1)
+		}
+
+		v, err := strconv.Atoi(s[1:])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Can't parse length:", s[1:], err)
+		}
+		m.length = v
+
+		result = append(result, m)
+
 	}
+	return result
+
+}
+
+func main() {
+	wire1 := parseMovements("R8,U5,L5,D3")
+	wire2 := parseMovements("U7,R6,D4,L4")
 
 	start, area := getArea(wire1, wire2)
-	fmt.Println(area)
-	runSimulation(area, start, wire1, wire2)
+	res := runSimulation(area, start, wire1, wire2)
+	fmt.Println("Result =", res)
 
 }

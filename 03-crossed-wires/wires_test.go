@@ -110,3 +110,42 @@ func TestSimulation(t *testing.T) {
 		}
 	}
 }
+
+func TestParseMovements(t *testing.T) {
+	cases := []struct {
+		input    string
+		expected []movement
+	}{
+		{
+			"R8,U5,L5,D3",
+			[]movement{
+				{8, RIGHT},
+				{5, UP},
+				{5, LEFT},
+				{3, DOWN},
+			},
+		},
+		{
+			"U7,R6,D4,L4",
+			[]movement{
+				{7, UP},
+				{6, RIGHT},
+				{4, DOWN},
+				{4, LEFT},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		result := parseMovements(c.input)
+		if len(result) != len(c.expected) {
+			t.Errorf("TestParseMovements failed (len): got %v, expected %v", result, c.expected)
+		}
+		for i := range result {
+			if result[i] != c.expected[i] {
+				t.Errorf("TestParseMovements failed (eq): got %v, expected %v", result, c.expected)
+			}
+		}
+	}
+
+}
