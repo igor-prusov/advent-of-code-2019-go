@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"image"
 	"os"
@@ -204,11 +205,32 @@ func parseMovements(input string) []movement {
 }
 
 func main() {
-	wire1 := parseMovements("R8,U5,L5,D3")
-	wire2 := parseMovements("U7,R6,D4,L4")
+	file, err := os.Open("input.txt")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Cant' open input.txt")
+	}
+
+	scanner := bufio.NewScanner(file)
+	var input []string
+
+	for scanner.Scan() {
+		input = append(input, scanner.Text())
+		if len(input) > 2 {
+			fmt.Fprintf(os.Stderr, "Too many lines")
+			panic(1)
+		}
+	}
+	if len(input) != 2 {
+		fmt.Fprintf(os.Stderr, "Need two lines in input")
+		panic(1)
+	}
+
+	file.Close()
+
+	wire1 := parseMovements(input[0])
+	wire2 := parseMovements(input[1])
 
 	start, area := getArea(wire1, wire2)
 	res := runSimulation(area, start, wire1, wire2)
 	fmt.Println("Result =", res)
-
 }
