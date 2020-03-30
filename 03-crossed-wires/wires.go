@@ -50,16 +50,26 @@ type movement struct {
 
 type field struct {
 	matrix [][]int
+	wire1  [][]int
+	wire2  [][]int
+	time1  int
+	time2  int
 	start  image.Point
 }
 
 func makeField(area image.Rectangle, start image.Point) field {
 	var f = field{}
 	f.matrix = make([][]int, area.Dy()+1)
+	f.wire1 = make([][]int, area.Dy()+1)
+	f.wire2 = make([][]int, area.Dy()+1)
 	for i := range f.matrix {
 		f.matrix[i] = make([]int, area.Dx()+1)
+		f.wire1[i] = make([]int, area.Dx()+1)
+		f.wire2[i] = make([]int, area.Dx()+1)
 	}
 	f.start = start
+	f.time1 = 0
+	f.time2 = 0
 	return f
 }
 
@@ -108,59 +118,77 @@ func getArea(wire1 []movement, wire2 []movement) (image.Point, image.Rectangle) 
 }
 
 // return minimal point of intersection
-func runWire(f field, a image.Point, b image.Point, wire_id int) int {
+func runWire(f *field, a image.Point, b image.Point, wire_id int) (int, int) {
 	minDistance := len(f.matrix) + len(f.matrix[0])
-	if a.X == b.X {
-		for i := 0; i < b.Y-a.Y; i++ {
-			p := image.Point{a.X, a.Y + i}
-			dist := abs(p.X-f.start.X) + abs(p.Y-f.start.Y)
-			v := f.matrix[p.Y][p.X]
-			if v != wire_id && v != 0 && dist < minDistance && !p.Eq(f.start) {
-				minDistance = dist
-			}
-			f.matrix[p.Y][p.X] = wire_id
-		}
-	} else if a.Y == b.Y {
-		for i := 0; i < b.X-a.X; i++ {
-			p := image.Point{a.X + i, a.Y}
-			dist := abs(p.X-f.start.X) + abs(p.Y-f.start.Y)
-			v := f.matrix[p.Y][p.X]
-			if v != wire_id && v != 0 && dist < minDistance && !p.Eq(f.start) {
-				minDistance = dist
-			}
-			f.matrix[p.Y][p.X] = wire_id
-		}
+	minTime := len(f.matrix) * len(f.matrix[0])
+
+	var wire [][]int
+	var time *int
+	if wire_id == 1 {
+		wire = f.wire1
+		time = &f.time1
+	} else if wire_id == 2 {
+		wire = f.wire2
+		time = &f.time2
 	} else {
-		panic("REEEE")
+		panic("Incorrect wire")
 	}
-	return minDistance
+
+	for p := a; !p.Eq(b); {
+
+		dist := abs(p.X-f.start.X) + abs(p.Y-f.start.Y)
+		v := f.matrix[p.Y][p.X]
+		if wire[p.Y][p.X] == 0 {
+			wire[p.Y][p.X] = *time
+		}
+		f.matrix[p.Y][p.X] = wire_id
+		if v != wire_id && v != 0 && !p.Eq(f.start) {
+			minDistance = min(dist, minDistance)
+
+			t := f.wire1[p.Y][p.X] + f.wire2[p.Y][p.X]
+			minTime = min(t, minTime)
+		}
+		*time++
+		if a.X == b.X && a.Y < b.Y {
+			p.Y++
+		} else if a.X == b.X && a.Y > b.Y {
+			p.Y--
+		} else if a.Y == b.Y && a.X < b.X {
+			p.X++
+		} else if a.Y == b.Y && a.X > b.X {
+			p.X--
+		} else {
+			panic("Can't run wire of zero length")
+		}
+	}
+	return minDistance, minTime
 
 }
 
-func runSimulation(area image.Rectangle, start image.Point, wire1 []movement, wire2 []movement) int {
+func runSimulation(area image.Rectangle, start image.Point, wire1 []movement, wire2 []movement) (int, int) {
 	f := makeField(area, start)
 	p := f.start
 	for _, op := range wire1 {
 		new_p := doMovement(op, p)
-		r := image.Rectangle{p, new_p}.Canon()
-		runWire(f, r.Min, r.Max, 1)
+		runWire(&f, p, new_p, 1)
 
 		p = new_p
 	}
 
 	p = f.start
 	minDistance := len(f.matrix) + len(f.matrix[0])
+	minTime := len(f.matrix) * len(f.matrix[0])
 	for _, op := range wire2 {
 		new_p := doMovement(op, p)
 
-		r := image.Rectangle{p, new_p}.Canon()
-		d := runWire(f, r.Min, r.Max, 2)
+		d, t := runWire(&f, p, new_p, 2)
 		minDistance = min(d, minDistance)
+		minTime = min(t, minTime)
 
 		p = new_p
 	}
 	//printMatrix(matrix)
-	return minDistance
+	return minDistance, minTime
 }
 
 func printMatrix(matrix [][]int) {
@@ -231,6 +259,7 @@ func main() {
 	wire2 := parseMovements(input[1])
 
 	start, area := getArea(wire1, wire2)
-	res := runSimulation(area, start, wire1, wire2)
-	fmt.Println("Result =", res)
+	res1, res2 := runSimulation(area, start, wire1, wire2)
+	fmt.Println("Result =", res1)
+	fmt.Println("Result =", res2)
 }

@@ -11,6 +11,7 @@ type testcase struct {
 	area   image.Rectangle
 	start  image.Point
 	result int
+	time   int
 }
 
 var cases = []testcase{
@@ -30,6 +31,7 @@ var cases = []testcase{
 		image.Rectangle{image.Point{0, 0}, image.Point{8, 7}},
 		image.Pt(0, 0),
 		6,
+		30,
 	},
 	{
 		[]movement{
@@ -56,6 +58,7 @@ var cases = []testcase{
 		image.Rectangle{image.Point{0, 0}, image.Point{238, 147}},
 		image.Pt(0, 30),
 		159,
+		610,
 	},
 	{
 		[]movement{
@@ -86,6 +89,7 @@ var cases = []testcase{
 		image.Rectangle{image.Point{0, 0}, image.Point{179, 120}},
 		image.Point{0, 16},
 		135,
+		410,
 	},
 }
 
@@ -104,9 +108,12 @@ func TestGetArea(t *testing.T) {
 
 func TestSimulation(t *testing.T) {
 	for _, c := range cases {
-		result := runSimulation(c.area, c.start, c.wire1, c.wire2)
-		if result != c.result {
-			t.Errorf("TestSimulation failed: got %v, expected %v", result, c.result)
+		res1, res2 := runSimulation(c.area, c.start, c.wire1, c.wire2)
+		if res1 != c.result {
+			t.Errorf("TestSimulation failed(1): got %v, expected %v", res1, c.result)
+		}
+		if res2 != c.time {
+			t.Errorf("TestSimulation failed(2): got %v, expected %v", res2, c.time)
 		}
 	}
 }
