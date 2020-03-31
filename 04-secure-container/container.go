@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -11,22 +12,26 @@ func usage() {
 	log.Fatal("Usage:", path.Base(os.Args[0]), " <range>")
 }
 
-func parseInput(input string) (int, int) {
+func parseInput(input string) (int, int, error) {
 	var start int
 	var end int
-	_, err := fmt.Sscanf(input, "%d-%d", &start, &end)
+	_, err := fmt.Sscanf(input, "%d-%d\n", &start, &end)
 	if err != nil {
-		log.Fatal("Incorrect range: ", input)
+		start, end = 0, 0
 	}
-	return start, end
+	return start, end, err
 }
 
-func verifyRange(start int, end int) bool {
+func verifyRange(start int, end int) error {
 	switch {
 	case start > end:
-		return false
+		return errors.New("start < end")
+	case start < 100000:
+		return errors.New("interval start should be a 6-digit number")
+	case end > 999999:
+		return errors.New("interval end should be a 6-digit number")
 	}
-	return true
+	return nil
 }
 
 func verifyPassword(password int) bool {
@@ -63,9 +68,15 @@ func main() {
 		usage()
 	}
 
-	start, end := parseInput(os.Args[1])
-	if !verifyRange(start, end) {
-		log.Fatal("Invalid range: ", start, "-", end)
+	input := os.Args[1]
+
+	start, end, err := parseInput(input)
+	if err != nil {
+		log.Fatal("Incorrect range: ", input, ": ", err.Error())
+	}
+
+	if err := verifyRange(start, end); err != nil {
+		log.Fatal("Invalid range: ", start, "-", end, "(", err.Error(), ")")
 	}
 
 	fmt.Println("range: ", start, "-", end)
