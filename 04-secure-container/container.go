@@ -34,33 +34,50 @@ func verifyRange(start int, end int) error {
 	return nil
 }
 
-func verifyPassword(password int) bool {
+func verifyPassword(password int) (bool, bool) {
+	var hasStrictlyDouble bool
 	var hasDouble bool
+	repeatCounter := 0
 	prev := 10
 	d, password := password%10, password/10
 	for d > 0 || password > 0 {
 		if d > prev {
-			return false
+			return false, false
 		}
 		if d == prev {
+			repeatCounter++
 			hasDouble = true
+		} else {
+			if repeatCounter == 1 {
+				hasStrictlyDouble = true
+			}
+			repeatCounter = 0
 		}
 		prev, d, password = d, password%10, password/10
 
 	}
-	return hasDouble
+	if repeatCounter == 1 {
+		hasStrictlyDouble = true
+		hasDouble = true
+	}
+	return hasDouble, hasStrictlyDouble
 }
 
-func bruteforce(start int, end int) int {
+func bruteforce(start int, end int) (int, int) {
 	var counter int
+	var strictCounter int
 
 	for current := start; current <= end; current++ {
-		if verifyPassword(current) {
+		soft, strict := verifyPassword(current)
+		if strict {
+			strictCounter++
+		}
+		if soft {
 			counter++
 		}
 
 	}
-	return counter
+	return counter, strictCounter
 }
 
 func main() {
@@ -81,6 +98,7 @@ func main() {
 
 	fmt.Println("range: ", start, "-", end)
 
-	result := bruteforce(start, end)
-	fmt.Println(result)
+	result1, result2 := bruteforce(start, end)
+	fmt.Println(result1)
+	fmt.Println(result2)
 }

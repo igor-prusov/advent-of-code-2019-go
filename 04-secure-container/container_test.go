@@ -9,19 +9,26 @@ func Test_verifyPassword(t *testing.T) {
 		password int
 	}
 	tests := []struct {
-		name string
-		args args
-		want bool
+		name  string
+		args  args
+		want  bool
+		want1 bool
 	}{
-		{"no pairs", args{123}, false},
-		{"correct", args{1223}, true},
-		{"not increasing", args{3223}, false},
-		{"not increasing", args{3221}, false},
+		{"no pairs", args{123}, false, false},
+		{"correct", args{1223}, true, true},
+		{"correct", args{1233}, true, true},
+		{"correct", args{1123}, true, true},
+		{"not increasing", args{3223}, false, false},
+		{"not increasing", args{3221}, false, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := verifyPassword(tt.args.password); got != tt.want {
-				t.Errorf("verifyPassword() = %v, want %v", got, tt.want)
+			got, got1 := verifyPassword(tt.args.password)
+			if got != tt.want {
+				t.Errorf("verifyPassword() = %v, %v, want %v, %v", got, got1, tt.want, tt.want1)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("verifyPassword() = %v, %v, want %v, %v", got, got1, tt.want, tt.want1)
 			}
 		})
 	}
