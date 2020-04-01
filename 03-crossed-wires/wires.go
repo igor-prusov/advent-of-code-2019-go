@@ -12,35 +12,32 @@ import (
 func min(x, y int) int {
 	if x < y {
 		return x
-	} else {
-		return y
 	}
+	return y
 }
 
 func max(x, y int) int {
 	if x > y {
 		return x
-	} else {
-		return y
 	}
+	return y
 }
 
 func abs(x int) int {
 	if x > 0 {
 		return x
-	} else {
-		return -x
 	}
+	return -x
 }
 
 type direction int
 
 const (
 	_ = iota
-	UP
-	DOWN
-	LEFT
-	RIGHT
+	goUp
+	goDown
+	goLeft
+	goRight
 )
 
 type movement struct {
@@ -75,13 +72,13 @@ func makeField(area image.Rectangle, start image.Point) field {
 
 func doMovement(mv movement, p image.Point) image.Point {
 	switch mv.direction {
-	case UP:
+	case goUp:
 		return image.Point{p.X, p.Y + mv.length}
-	case DOWN:
+	case goDown:
 		return image.Point{p.X, p.Y - mv.length}
-	case LEFT:
+	case goLeft:
 		return image.Point{p.X - mv.length, p.Y}
-	case RIGHT:
+	case goRight:
 		return image.Point{p.X + mv.length, p.Y}
 
 	}
@@ -118,16 +115,16 @@ func getArea(wire1 []movement, wire2 []movement) (image.Point, image.Rectangle) 
 }
 
 // return minimal point of intersection
-func runWire(f *field, a image.Point, b image.Point, wire_id int) (int, int) {
+func runWire(f *field, a image.Point, b image.Point, wireID int) (int, int) {
 	minDistance := len(f.matrix) + len(f.matrix[0])
 	minTime := len(f.matrix) * len(f.matrix[0])
 
 	var wire [][]int
 	var time *int
-	if wire_id == 1 {
+	if wireID == 1 {
 		wire = f.wire1
 		time = &f.time1
-	} else if wire_id == 2 {
+	} else if wireID == 2 {
 		wire = f.wire2
 		time = &f.time2
 	} else {
@@ -141,8 +138,8 @@ func runWire(f *field, a image.Point, b image.Point, wire_id int) (int, int) {
 		if wire[p.Y][p.X] == 0 {
 			wire[p.Y][p.X] = *time
 		}
-		f.matrix[p.Y][p.X] = wire_id
-		if v != wire_id && v != 0 && !p.Eq(f.start) {
+		f.matrix[p.Y][p.X] = wireID
+		if v != wireID && v != 0 && !p.Eq(f.start) {
 			minDistance = min(dist, minDistance)
 
 			t := f.wire1[p.Y][p.X] + f.wire2[p.Y][p.X]
@@ -169,23 +166,23 @@ func runSimulation(area image.Rectangle, start image.Point, wire1 []movement, wi
 	f := makeField(area, start)
 	p := f.start
 	for _, op := range wire1 {
-		new_p := doMovement(op, p)
-		runWire(&f, p, new_p, 1)
+		newP := doMovement(op, p)
+		runWire(&f, p, newP, 1)
 
-		p = new_p
+		p = newP
 	}
 
 	p = f.start
 	minDistance := len(f.matrix) + len(f.matrix[0])
 	minTime := len(f.matrix) * len(f.matrix[0])
 	for _, op := range wire2 {
-		new_p := doMovement(op, p)
+		newP := doMovement(op, p)
 
-		d, t := runWire(&f, p, new_p, 2)
+		d, t := runWire(&f, p, newP, 2)
 		minDistance = min(d, minDistance)
 		minTime = min(t, minTime)
 
-		p = new_p
+		p = newP
 	}
 	//printMatrix(matrix)
 	return minDistance, minTime
@@ -207,13 +204,13 @@ func parseMovements(input string) []movement {
 
 		switch s[0] {
 		case 'R':
-			m.direction = RIGHT
+			m.direction = goRight
 		case 'L':
-			m.direction = LEFT
+			m.direction = goLeft
 		case 'U':
-			m.direction = UP
+			m.direction = goUp
 		case 'D':
-			m.direction = DOWN
+			m.direction = goDown
 		default:
 			fmt.Fprintln(os.Stderr, "Can't parse direction:", s[0])
 			panic(1)
