@@ -97,9 +97,9 @@ func programRun(program []int) (int, error) {
 			}
 
 			if inst.operands[1] == positionMode {
-				operand1 = program[program[i+2]]
+				operand2 = program[program[i+2]]
 			} else {
-				operand1 = program[i+2]
+				operand2 = program[i+2]
 			}
 
 			if inst.operands[2] == immediateMode {
