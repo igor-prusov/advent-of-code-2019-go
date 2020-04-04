@@ -55,28 +55,24 @@ func parseInput(input string) []int {
 
 func programRun(program []int) (int, error) {
 	for i := 0; ; {
-		fmt.Println("i = ", i)
 		inst := paresInstruction(program[i])
-		fmt.Println("instruction = ", inst)
+
+		getOperand := func(j int) int {
+			if inst.operands[j] == positionMode {
+				return program[program[i+j+1]]
+			} else if inst.operands[j] == immediateMode {
+				return program[i+j+1]
+			} else {
+				panic("Unexpected operand mode")
+			}
+		}
+
 		switch inst.opcode {
 		case 99:
 			return 0, nil
 		case 1:
-			fmt.Printf("[%d %d %d %d]\n", program[i], program[i+1], program[i+2], program[i+3])
-			var operand1 int
-			var operand2 int
-
-			if inst.operands[0] == positionMode {
-				operand1 = program[program[i+1]]
-			} else {
-				operand1 = program[i+1]
-			}
-
-			if inst.operands[1] == positionMode {
-				operand2 = program[program[i+2]]
-			} else {
-				operand2 = program[i+2]
-			}
+			operand1 := getOperand(0)
+			operand2 := getOperand(1)
 
 			if inst.operands[2] == immediateMode {
 				panic("Unexpected")
@@ -86,21 +82,8 @@ func programRun(program []int) (int, error) {
 			program[resultIndex] = operand1 + operand2
 			i += 4
 		case 2:
-			fmt.Printf("[%d %d %d %d]\n", program[i], program[i+1], program[i+2], program[i+3])
-			var operand1 int
-			var operand2 int
-
-			if inst.operands[0] == positionMode {
-				operand1 = program[program[i+1]]
-			} else {
-				operand1 = program[i+1]
-			}
-
-			if inst.operands[1] == positionMode {
-				operand2 = program[program[i+2]]
-			} else {
-				operand2 = program[i+2]
-			}
+			operand1 := getOperand(0)
+			operand2 := getOperand(1)
 
 			if inst.operands[2] == immediateMode {
 				panic("Unexpected")
@@ -110,7 +93,6 @@ func programRun(program []int) (int, error) {
 			program[resultIndex] = operand1 * operand2
 			i += 4
 		case 3:
-			fmt.Printf("[%d %d]\n", program[i], program[i+1])
 			var input int
 			fmt.Print("Enter integer: ")
 			_, err := fmt.Scanf("%d", &input)
@@ -121,7 +103,6 @@ func programRun(program []int) (int, error) {
 			program[address] = input
 			i += 2
 		case 4:
-			fmt.Printf("[%d %d]\n", program[i], program[i+1])
 			address := program[i+1]
 			fmt.Println("Print: ", program[address])
 			i += 2
