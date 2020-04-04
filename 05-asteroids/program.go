@@ -8,6 +8,37 @@ import (
 	"strings"
 )
 
+type operandMode int
+
+const (
+	positionMode operandMode = iota
+	immediateMode
+)
+
+type instruction struct {
+	operands [3]operandMode
+	opcode   int
+}
+
+func paresInstruction(input int) instruction {
+	var inst instruction
+	inst.opcode = input % 100
+	input /= 100
+	for i := range inst.operands {
+		mode := input % 10
+		switch mode {
+		case 0:
+			inst.operands[i] = positionMode
+		case 1:
+			inst.operands[i] = immediateMode
+		default:
+			panic("Incorrect operand type")
+		}
+		input /= 10
+	}
+	return inst
+}
+
 func parseInput(input string) []int {
 	programText := strings.Split(input, ",")
 	var program = make([]int, len(programText))
@@ -24,23 +55,64 @@ func parseInput(input string) []int {
 
 func programRun(program []int) (int, error) {
 	for i := 0; ; {
-		switch opcode := program[i]; opcode {
+		fmt.Println("i = ", i)
+		inst := paresInstruction(program[i])
+		fmt.Println("instruction = ", inst)
+		switch inst.opcode {
 		case 99:
 			return 0, nil
 		case 1:
-			operand1 := program[program[i+1]]
-			operand2 := program[program[i+2]]
+			fmt.Printf("[%d %d %d %d]\n", program[i], program[i+1], program[i+2], program[i+3])
+			var operand1 int
+			var operand2 int
+
+			if inst.operands[0] == positionMode {
+				operand1 = program[program[i+1]]
+			} else {
+				operand1 = program[i+1]
+			}
+
+			if inst.operands[1] == positionMode {
+				operand2 = program[program[i+2]]
+			} else {
+				operand2 = program[i+2]
+			}
+
+			if inst.operands[2] == immediateMode {
+				panic("Unexpected")
+			}
+
 			resultIndex := program[i+3]
 			program[resultIndex] = operand1 + operand2
 			i += 4
 		case 2:
-			operand1 := program[program[i+1]]
-			operand2 := program[program[i+2]]
+			fmt.Printf("[%d %d %d %d]\n", program[i], program[i+1], program[i+2], program[i+3])
+			var operand1 int
+			var operand2 int
+
+			if inst.operands[0] == positionMode {
+				operand1 = program[program[i+1]]
+			} else {
+				operand1 = program[i+1]
+			}
+
+			if inst.operands[1] == positionMode {
+				operand1 = program[program[i+2]]
+			} else {
+				operand1 = program[i+2]
+			}
+
+			if inst.operands[2] == immediateMode {
+				panic("Unexpected")
+			}
+
 			resultIndex := program[i+3]
 			program[resultIndex] = operand1 * operand2
 			i += 4
 		case 3:
+			fmt.Printf("[%d %d]\n", program[i], program[i+1])
 			var input int
+			fmt.Print("Enter integer: ")
 			_, err := fmt.Scanf("%d", &input)
 			if err != nil {
 				return 0, fmt.Errorf("Failed to parse user input")
@@ -49,12 +121,13 @@ func programRun(program []int) (int, error) {
 			program[address] = input
 			i += 2
 		case 4:
+			fmt.Printf("[%d %d]\n", program[i], program[i+1])
 			address := program[i+1]
 			fmt.Println("Print: ", program[address])
 			i += 2
 
 		default:
-			return 0, fmt.Errorf("Failed to parse opcode: %d", opcode)
+			return 0, fmt.Errorf("Failed to parse opcode: %d", inst.opcode)
 
 		}
 	}
@@ -72,30 +145,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	inpuntString := strings.Trim(string(input), "\n")
-	originalProgram := parseInput(inpuntString)
+	inputString := strings.Trim(string(input), "\n")
+	originalProgram := parseInput(inputString)
 
 	program := make([]int, len(originalProgram))
 	copy(program, originalProgram)
 
-	restoreProgram(program, 12, 2)
-	programRun(program)
-
-	fmt.Println("Result =", program[0])
-
-	const desiredOutput = 19690720
-
-	for noun := 0; noun < 100; noun++ {
-		for verb := 0; verb < 100; verb++ {
-			copy(program, originalProgram)
-
-			restoreProgram(program, noun, verb)
-			_, err := programRun(program)
-			if err == nil && program[0] == desiredOutput {
-				fmt.Println("Result =", 100*noun+verb)
-				return
-			}
-		}
+	// restoreProgram(program, 12, 2)
+	_, err = programRun(program)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error when executing user program:", err.Error())
+		os.Exit(1)
 	}
-	os.Exit(1)
 }
