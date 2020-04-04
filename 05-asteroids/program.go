@@ -20,7 +20,7 @@ type instruction struct {
 	opcode   int
 }
 
-func paresInstruction(input int) instruction {
+func paresInstruction(input int) (instruction, error) {
 	var inst instruction
 	inst.opcode = input % 100
 	input /= 100
@@ -32,11 +32,11 @@ func paresInstruction(input int) instruction {
 		case 1:
 			inst.operands[i] = immediateMode
 		default:
-			panic("Incorrect operand type")
+			return inst, fmt.Errorf("Incorrect operand type")
 		}
 		input /= 10
 	}
-	return inst
+	return inst, nil
 }
 
 func parseInput(input string) []int {
@@ -55,15 +55,18 @@ func parseInput(input string) []int {
 
 func programRun(program []int) (int, error) {
 	for i := 0; ; {
-		inst := paresInstruction(program[i])
+		inst, err := paresInstruction(program[i])
+		if err != nil {
+			return 0, nil
+		}
 
-		getOperand := func(j int) int {
+		getOperand := func(j int) (int, error) {
 			if inst.operands[j] == positionMode {
-				return program[program[i+j+1]]
+				return program[program[i+j+1]], nil
 			} else if inst.operands[j] == immediateMode {
-				return program[i+j+1]
+				return program[i+j+1], nil
 			} else {
-				panic("Unexpected operand mode")
+				return 0, fmt.Errorf("Incorrect operand type")
 			}
 		}
 
@@ -71,22 +74,36 @@ func programRun(program []int) (int, error) {
 		case 99:
 			return 0, nil
 		case 1:
-			operand1 := getOperand(0)
-			operand2 := getOperand(1)
+			operand1, err := getOperand(0)
+			if err != nil {
+				return 0, err
+			}
+
+			operand2, err := getOperand(1)
+			if err != nil {
+				return 0, err
+			}
 
 			if inst.operands[2] == immediateMode {
-				panic("Unexpected")
+				return 0, fmt.Errorf("Destination operand must be immediate")
 			}
 
 			resultIndex := program[i+3]
 			program[resultIndex] = operand1 + operand2
 			i += 4
 		case 2:
-			operand1 := getOperand(0)
-			operand2 := getOperand(1)
+			operand1, err := getOperand(0)
+			if err != nil {
+				return 0, err
+			}
+
+			operand2, err := getOperand(1)
+			if err != nil {
+				return 0, err
+			}
 
 			if inst.operands[2] == immediateMode {
-				panic("Unexpected")
+				return 0, fmt.Errorf("Destination operand must be immediate")
 			}
 
 			resultIndex := program[i+3]
